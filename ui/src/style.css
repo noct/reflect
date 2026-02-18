@@ -1,0 +1,100 @@
+/*
+ * Reflector: Scene Explorer
+ * Visual design derived from Flecs Explorer (MIT License)
+ * https://github.com/flecs-hub/explorer
+ */
+
+:root {
+  /* Backgrounds */
+  --bg-app: #0a0c0e;
+  --bg-panel: #16171c;
+  --bg-panel-header: #242832;
+  --bg-input: #1d2028;
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --bg-selected: rgba(71, 181, 118, 0.1);
+
+  /* Text */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+
+  /* Accents */
+  --accent-green: #47b576;
+  --accent-blue: #4f95ff;
+  --accent-red: #b5494b;
+
+  /* Typed values */
+  --value-number: #a2d8b4;
+  --value-string: #b5894b;
+  --value-bool: #4981b5;
+
+  /* Borders */
+  --border: #383c46;
+  --border-panel: #16171c;
+
+  /* Spacing */
+  --p-1: 2px;
+  --p-2: 4px;
+  --p-3: 8px;
+  --p-4: 12px;
+  --p-5: 16px;
+
+  /* Radius */
+  --br-sm: 2px;
+  --br: 4px;
+
+  /* Typography */
+  --font-sans: 'Inter', Helvetica, sans-serif;
+  --font-mono: 'Roboto Mono', Menlo, Monaco, 'Courier New', monospace;
+  --fs-xs: 10px;
+  --fs-sm: 12px;
+  --fs-md: 14px;
+
+  /* Layout */
+  --topbar-height: 36px;
+  --sidebar-width: 240px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  background: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}

@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: Reflector Scene Explorer API
+  description: REST API for inspecting a running application's scene hierarchy and performance metrics.
+  version: 0.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:7700
+    description: Local application
+
+paths:
+  /api/perf:
+    get:
+      summary: Get performance metrics
+      description: Returns current frame timing and entity count. Values jitter slightly per request to reflector live application state.
+      operationId: getPerf
+      responses:
+        '200':
+          description: Current performance snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerfMetrics'
+
+  /api/scene:
+    get:
+      summary: Get scene hierarchy
+      description: Returns the full scene tree. Each node contains an id (pointer as decimal string), type name, optional human-readable name, and children.
+      operationId: getScene
+      responses:
+        '200':
+          description: Scene tree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SceneTree'
+
+  /api/entity/{id}:
+    get:
+      summary: Get entity details
+      description: Returns the type, name, and property list for a single entity. Properties are typed (float, int, string, color).
+      operationId: getEntity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Entity id (pointer as decimal string, e.g. "3204876128")
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity details with properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityDetail'
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    PerfMetrics:
+      type: object
+      required: [fps, frameTimeMs, entityCount]
+      properties:
+        fps:
+          type: number
+          format: float
+          example: 60.1
+        frameTimeMs:
+          type: number
+          format: float
+          example: 16.23
+        entityCount:
+          type: integer
+          example: 347
+
+    SceneTree:
+      type: object
+      required: [entities]
+      properties:
+        entities:
+          type: array
+          description: Top-level root entities
+          items:
+            $ref: '#/components/schemas/SceneNode'
+
+    SceneNode:
+      type: object
+      required: [id, type, name, children]
+      properties:
+        id:
+          type: string
+          description: Pointer address as a decimal string
+          example: "3204876128"
+        type:
+          type: string
+          description: Component/entity type name
+          example: Transform
+        name:
+          type: string
+          nullable: true
+          description: Optional human-readable name
+          example: Player
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/SceneNode'
+
+    EntityDetail:
+      type: object
+      required: [id, type, name, properties]
+      properties:
+        id:
+          type: string
+          example: "3204876128"
+        type:
+          type: string
+          example: Transform
+        name:
+          type: string
+          nullable: true
+          example: Player
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Property'
+
+    Property:
+      type: object
+      required: [name, type, value]
+      properties:
+        name:
+          type: string
+          description: Property name, may use dot notation for nested fields
+          example: position.x
+        type:
+          type: string
+          enum: [float, int, string, color]
+          description: |
+            Value type hint for display:
+            - float: decimal number
+            - int: integer (also used for booleans, 0/1)
+            - string: text value
+            - color: hex color string (e.g. "#FF5733")
+        value:
+          description: The property value. Type depends on the `type` field.
+          oneOf:
+            - type: number
+            - type: integer
+            - type: string
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Entity not found
