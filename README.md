@@ -6,6 +6,7 @@ A lightweight web-based scene explorer for C++ game/app projects. Connect to a r
 
 Visual design derived from [Flecs Explorer](https://github.com/flecs-hub/explorer).
 
+![Screenshot](./screenshot.png)
 
 ## Overview
 
