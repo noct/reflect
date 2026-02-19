@@ -48,7 +48,8 @@ struct SceneNode {
 enum class PropertyType { Float,
     Int,
     String,
-    Color };
+    Color,
+    Points2D };
 
 struct Property {
     std::string name;
@@ -70,6 +71,13 @@ struct Property {
     static Property Color(std::string name, std::string hex)
     {
         return { std::move(name), PropertyType::Color, std::move(hex) };
+    }
+    static Property Points2D(std::string name, std::vector<std::pair<float, float>> pts)
+    {
+        nlohmann::json arr = nlohmann::json::array();
+        for (auto& [x, y] : pts)
+            arr.push_back({ x, y });
+        return { std::move(name), PropertyType::Points2D, std::move(arr) };
     }
 };
 
@@ -151,6 +159,8 @@ namespace detail {
             return "string";
         case PropertyType::Color:
             return "color";
+        case PropertyType::Points2D:
+            return "points2d";
         default:
             return "unknown";
         }

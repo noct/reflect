@@ -142,19 +142,28 @@ components:
           example: position.x
         type:
           type: string
-          enum: [float, int, string, color]
+          enum: [float, int, string, color, points2d]
           description: |
             Value type hint for display:
             - float: decimal number
             - int: integer (also used for booleans, 0/1)
             - string: text value
             - color: hex color string (e.g. "#FF5733")
+            - points2d: array of [x, y] pairs (e.g. [[0,0],[10,0],[10,5]])
         value:
           description: The property value. Type depends on the `type` field.
           oneOf:
             - type: number
             - type: integer
             - type: string
+            - type: array
+              description: "For points2d: array of [x, y] coordinate pairs"
+              items:
+                type: array
+                items:
+                  type: number
+                minItems: 2
+                maxItems: 2
 
     Error:
       type: object

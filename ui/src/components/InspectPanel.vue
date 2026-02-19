@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useApi } from '../api.js';
+import PointsPreview from './PointsPreview.vue';
 
 const props = defineProps({
   entityId: String,
@@ -62,14 +63,24 @@ function formatId(id) {
       </div>
 
       <div class="properties">
-        <div class="prop-row" v-for="prop in entity.properties" :key="prop.name">
-          <span class="prop-name">{{ prop.name }}</span>
-          <span class="prop-value" :class="valueClass(prop.type)">
-            <span v-if="prop.type === 'color'" class="color-swatch" :style="{ background: prop.value }"></span>
-            {{ prop.value }}
-          </span>
-          <span class="prop-type">{{ prop.type }}</span>
-        </div>
+        <template v-for="prop in entity.properties" :key="prop.name">
+          <div v-if="prop.type === 'points2d'" class="prop-block">
+            <div class="prop-block-header">
+              <span class="prop-name">{{ prop.name }}</span>
+              <span class="prop-count">{{ prop.value.length }} points</span>
+              <span class="prop-type">{{ prop.type }}</span>
+            </div>
+            <PointsPreview :points="prop.value" />
+          </div>
+          <div v-else class="prop-row">
+            <span class="prop-name">{{ prop.name }}</span>
+            <span class="prop-value" :class="valueClass(prop.type)">
+              <span v-if="prop.type === 'color'" class="color-swatch" :style="{ background: prop.value }"></span>
+              {{ prop.value }}
+            </span>
+            <span class="prop-type">{{ prop.type }}</span>
+          </div>
+        </template>
       </div>
     </template>
 
@@ -166,6 +177,26 @@ function formatId(id) {
   border-radius: var(--br-sm);
   border: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.prop-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prop-block-header {
+  display: flex;
+  align-items: center;
+  padding: 5px 8px 0;
+  gap: 8px;
+}
+
+.prop-count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  flex: 1;
 }
 
 .placeholder {

@@ -26,7 +26,7 @@ function mulberry32(seed) {
 const ENTITY_TYPES = [
   'Transform', 'MeshRenderer', 'Camera', 'Light', 'Collider',
   'AudioSource', 'RigidBody', 'Sprite', 'ParticleSystem', 'Script',
-  'Animator', 'Canvas', 'Text', 'Image', 'Button',
+  'Animator', 'Canvas', 'Text', 'Image', 'Button', 'Zone',
 ];
 
 const NAMES = [
@@ -133,6 +133,18 @@ function generateProperties(type, id) {
       props.push({ name: 'startColor', type: 'color', value: randomColor(rng) });
       props.push({ name: 'lifetime', type: 'float', value: round(0.5 + rng() * 3) });
       break;
+    case 'Zone': {
+      const zoneType = pick(rng, ['trigger', 'patrol', 'spawn', 'nav_hint']);
+      props.push({ name: 'zoneType', type: 'string', value: zoneType });
+      props.push({ name: 'color', type: 'color', value: randomColor(rng) });
+      if (zoneType === 'patrol') {
+        props.push({ name: 'path', type: 'points2d', value: randomPath(rng, rng() * 100 - 50, rng() * 100 - 50, 4 + Math.floor(rng() * 4)) });
+        props.push({ name: 'loop', type: 'int', value: rng() > 0.3 ? 1 : 0 });
+      } else {
+        props.push({ name: 'boundary', type: 'points2d', value: randomPolygon(rng, rng() * 100 - 50, rng() * 100 - 50, 5 + rng() * 20, 4 + Math.floor(rng() * 5)) });
+      }
+      break;
+    }
     case 'Text':
       props.push({ name: 'text', type: 'string', value: pick(rng, ['Score: 0', 'Health', 'Game Over', 'Press Start', 'Loading...']) });
       props.push({ name: 'fontSize', type: 'int', value: Math.floor(12 + rng() * 24) });
@@ -144,6 +156,27 @@ function generateProperties(type, id) {
   }
 
   return props;
+}
+
+function randomPolygon(rng, cx, cy, radius, sides) {
+  const pts = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (i / sides) * Math.PI * 2;
+    const r = radius * (0.6 + rng() * 0.4);
+    pts.push([round(cx + Math.cos(angle) * r), round(cy + Math.sin(angle) * r)]);
+  }
+  return pts;
+}
+
+function randomPath(rng, startX, startY, segments) {
+  const pts = [[round(startX), round(startY)]];
+  let x = startX, y = startY;
+  for (let i = 0; i < segments; i++) {
+    x += (rng() - 0.3) * 40;
+    y += (rng() - 0.3) * 40;
+    pts.push([round(x), round(y)]);
+  }
+  return pts;
 }
 
 function round(v) { return Math.round(v * 100) / 100; }
@@ -168,6 +201,31 @@ const worldChildren = [];
 for (let i = 0; i < 8; i++) {
   worldChildren.push(generateEntity(2, rng, namePool));
 }
+
+// Add explicit zone entities for testing points2d
+function addZoneEntity(name, zoneType, points) {
+  const id = makeId();
+  const entity = {
+    id, type: 'Zone', name, children: [],
+    properties: [
+      { name: 'enabled', type: 'int', value: 1 },
+      { name: 'zoneType', type: 'string', value: zoneType },
+      { name: 'color', type: 'color', value: zoneType === 'patrol' ? '#4F95FF' : '#47B576' },
+      { name: zoneType === 'patrol' ? 'path' : 'boundary', type: 'points2d', value: points },
+    ],
+  };
+  entityMap.set(id, entity);
+  return { id, type: 'Zone', name, children: [] };
+}
+worldChildren.push(addZoneEntity('Spawn_Zone_A', 'spawn', [
+  [0, 0], [30, 0], [30, 20], [0, 20],
+]));
+worldChildren.push(addZoneEntity('Combat_Area', 'trigger', [
+  [-10, -10], [50, -5], [60, 40], [30, 55], [-15, 35],
+]));
+worldChildren.push(addZoneEntity('Guard_Patrol', 'patrol', [
+  [0, 0], [20, 5], [40, -10], [55, 15], [35, 30], [10, 25],
+]));
 const worldId = makeId();
 const worldNode = { id: worldId, type: 'Transform', name: 'World', children: worldChildren };
 entityMap.set(worldId, {
