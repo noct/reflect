@@ -293,6 +293,69 @@ function currentPerf() {
 }
 
 // ---------------------------------------------------------------------------
+// Profile zone simulation
+// ---------------------------------------------------------------------------
+const PROFILE_ZONES = [
+  { name: 'Render.DrawCalls',    parent: null,     base: 5.5,  jitter: 0.4 },
+  { name: 'Render.Culling',      parent: null,     base: 0.9,  jitter: 0.15 },
+  { name: 'Render.PostFX',       parent: null,     base: 1.2,  jitter: 0.2 },
+  { name: 'Physics.Broadphase',  parent: null,     base: 1.4,  jitter: 0.2 },
+  { name: 'Physics.Narrowphase', parent: null,     base: 0.8,  jitter: 0.15 },
+  { name: 'Physics.Solver',      parent: null,     base: 0.6,  jitter: 0.1 },
+  { name: 'AI.Pathfinding',      parent: null,     base: 0.7,  jitter: 0.1 },
+  { name: 'AI.Decisions',        parent: null,     base: 0.3,  jitter: 0.05 },
+  { name: 'Audio.Mix',           parent: null,     base: 0.4,  jitter: 0.05 },
+  { name: 'Scripts.Update',      parent: null,     base: 0.5,  jitter: 0.1 },
+];
+
+const PROFILE_HISTORY_SIZE = 600;
+const profileRng = mulberry32(99);
+
+// Per-zone state
+const profileState = PROFILE_ZONES.map(z => ({
+  ...z,
+  history: [],
+  ema: z.base,
+  spikeAmount: 0,
+  spikeDecay: 0,
+}));
+
+// Fill initial history
+for (let i = 0; i < PROFILE_HISTORY_SIZE; i++) {
+  profileTick();
+}
+
+function profileTick() {
+  for (const z of profileState) {
+    let val = z.base + (profileRng() - 0.5) * z.jitter * 2;
+    if (z.spikeDecay > 0) {
+      const t = z.spikeDecay / 200;
+      val += z.spikeAmount * (0.3 + 0.7 * profileRng()) * Math.min(t * 3, 1);
+      z.spikeDecay--;
+      if (z.spikeDecay <= 0) z.spikeAmount = 0;
+    }
+    z.history.push(Math.round(val * 1000) / 1000);
+    if (z.history.length > PROFILE_HISTORY_SIZE) z.history.shift();
+
+    // EMA baseline
+    const alpha = 0.002;
+    const clamped = Math.min(val, z.ema * 2.5);
+    z.ema += alpha * (clamped - z.ema);
+  }
+}
+
+// Advance profile simulation at ~60Hz
+setInterval(() => {
+  profileTick();
+  // Random spikes (rare)
+  if (Math.random() > 0.998) {
+    const z = profileState[Math.floor(Math.random() * profileState.length)];
+    z.spikeAmount = 4 + Math.random() * 6;
+    z.spikeDecay = 100 + Math.floor(Math.random() * 150);
+  }
+}, 16);
+
+// ---------------------------------------------------------------------------
 // Routes
 // ---------------------------------------------------------------------------
 app.get('/api/perf', (_req, res) => {
@@ -301,6 +364,17 @@ app.get('/api/perf', (_req, res) => {
 
 app.get('/api/scene', (_req, res) => {
   res.json(sceneTree);
+});
+
+app.get('/api/profile', (_req, res) => {
+  res.json({
+    zones: profileState.map(z => ({
+      name: z.name,
+      parent: z.parent,
+      history: z.history,
+      ema: Math.round(z.ema * 1000) / 1000,
+    })),
+  });
 });
 
 app.get('/api/entity/:id', (req, res) => {

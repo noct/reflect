@@ -2,6 +2,7 @@ import { ref, readonly, onUnmounted } from 'vue';
 
 const POLL_INTERVAL = 2000;
 const PERF_POLL_INTERVAL = 500;
+const PROFILE_POLL_INTERVAL = 200;
 const PERF_HISTORY_SIZE = 200;
 
 // Shared reactive state
@@ -9,9 +10,11 @@ const connected = ref(false);
 const perf = ref(null);
 const perfHistory = ref([]);
 const scene = ref(null);
+const profile = ref(null);
 
 let pollTimer = null;
 let perfTimer = null;
+let profileTimer = null;
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -34,13 +37,16 @@ async function pollConnection() {
       await refreshScene();
       // Start fast perf polling
       startPerfPolling();
+      startProfilePolling();
     }
   } catch {
     if (connected.value) {
       connected.value = false;
       perf.value = null;
       scene.value = null;
+      profile.value = null;
       stopPerfPolling();
+      stopProfilePolling();
     }
   }
 }
@@ -73,6 +79,24 @@ function stopPerfPolling() {
   }
 }
 
+function startProfilePolling() {
+  stopProfilePolling();
+  profileTimer = setInterval(async () => {
+    try {
+      profile.value = await fetchJson('/api/profile');
+    } catch {
+      // Connection poll will handle disconnect
+    }
+  }, PROFILE_POLL_INTERVAL);
+}
+
+function stopProfilePolling() {
+  if (profileTimer) {
+    clearInterval(profileTimer);
+    profileTimer = null;
+  }
+}
+
 async function refreshScene() {
   try {
     const data = await fetchJson('/api/scene');
@@ -101,6 +125,7 @@ function stopPolling() {
     pollTimer = null;
   }
   stopPerfPolling();
+  stopProfilePolling();
 }
 
 // Composable for components
@@ -113,6 +138,7 @@ export function useApi() {
     perf: readonly(perf),
     perfHistory: readonly(perfHistory),
     scene: readonly(scene),
+    profile: readonly(profile),
     fetchEntity,
     refreshScene,
   };

@@ -1,31 +1,50 @@
 <script setup>
-import FrameTimeGraph from './FrameTimeGraph.vue';
+import { ref } from 'vue';
+import FrameTimeRibbon from './FrameTimeRibbon.vue';
+import HotFunctions from './HotFunctions.vue';
+import CompositionChart from './CompositionChart.vue';
 
 defineProps({
   perf: Object,
   perfHistory: Array,
+  profile: Object,
   connected: Boolean,
 });
+
+const windowSize = ref(5);
 </script>
 
 <template>
-  <div class="performance-panel" v-if="connected">
-    <FrameTimeGraph :data="perfHistory" />
+  <div class="performance-panel" v-if="connected && profile">
+    <FrameTimeRibbon
+      :zones="profile.zones"
+      :windowSize="windowSize"
+    />
 
-    <div class="stats" v-if="perf">
-      <div class="stat-row">
-        <span class="stat-name">FPS</span>
-        <span class="stat-value">{{ perf.fps.toFixed(1) }}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-name">Frame Time</span>
-        <span class="stat-value">{{ perf.frameTimeMs.toFixed(2) }} ms</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-name">Entities</span>
-        <span class="stat-value">{{ perf.entityCount }}</span>
+    <HotFunctions
+      :zones="profile.zones"
+      :windowSize="windowSize"
+    />
+
+    <CompositionChart
+      :zones="profile.zones"
+      :windowSize="windowSize"
+    />
+
+    <div class="controls">
+      <label class="control-label">
+        Window
+        <input type="range" v-model.number="windowSize" min="1" max="30" class="control-range" />
+        <span class="control-value">{{ windowSize }}</span>
+      </label>
+      <div class="stat-pills" v-if="perf">
+        <span class="pill">{{ perf.fps.toFixed(0) }} FPS</span>
+        <span class="pill">{{ perf.entityCount }} entities</span>
       </div>
     </div>
+  </div>
+  <div v-else-if="connected" class="placeholder">
+    Waiting for profile data...
   </div>
   <div v-else class="placeholder">
     Not connected
@@ -39,30 +58,48 @@ defineProps({
   gap: 16px;
 }
 
-.stats {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.stat-row {
+.controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  background: var(--bg-input);
-  border-radius: var(--br-sm);
+  gap: 16px;
+  padding-top: 4px;
 }
 
-.stat-name {
-  font-size: var(--fs-sm);
-  color: var(--text-secondary);
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.stat-value {
+.control-range {
+  width: 100px;
+  accent-color: var(--accent-green);
+}
+
+.control-value {
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
-  color: var(--value-number);
+  color: var(--text-secondary);
+  min-width: 20px;
+}
+
+.stat-pills {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.pill {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  background: var(--bg-input);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .placeholder {

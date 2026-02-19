@@ -1,5 +1,5 @@
 /*
- * Reflector: minimal example
+ * Reflector: minimal example with profiling
  *
  * Build:
  *   gcc -std=c11 -DNO_SSL -DNO_CGI -Ivendor/civetweb -c vendor/civetweb/civetweb.c -o civetweb.o
@@ -8,7 +8,7 @@
  *
  * Run:
  *   ./reflector_example
- *   # Then open http://localhost:7700/api/perf in a browser or curl it.
+ *   # Open the Reflector UI and switch to the Performance tab.
  */
 
 #define REFLECTOR_IMPLEMENTATION
@@ -18,6 +18,7 @@
 #include <chrono>
 #include <csignal>
 #include <cstdio>
+#include <cstdlib>
 #include <thread>
 
 static std::atomic<bool> g_running { true };
@@ -25,7 +26,7 @@ static std::atomic<bool> g_running { true };
 void onSignal(int) { g_running = false; }
 
 // ---------------------------------------------------------------------------
-// Example: a tiny fake game scene
+// Example: a tiny fake game scene with profiled systems
 // ---------------------------------------------------------------------------
 
 class MyGameServer : public reflector::Server {
@@ -40,7 +41,6 @@ protected:
 
     std::vector<reflector::SceneNode> onGetScene() override
     {
-        // Flat list with parent IDs (the library builds the tree)
         return {
             { 0xA000, 0, "Transform", "Root" },
             { 0xA100, 0xA000, "Transform", "World" },
@@ -59,34 +59,28 @@ protected:
                                                                         reflector::Property::Float("position.y", 0.0f),
                                                                         reflector::Property::Float("position.z", 0.0f),
                                                                     } };
-        case 0xA100:
-            return reflector::EntityInfo { id, "Transform", "World", {
-                                                                         reflector::Property::Int("entityCount", 3),
-                                                                         reflector::Property::String("tag", "world"),
-                                                                     } };
         case 0xA200:
             return reflector::EntityInfo { id, "Camera", "MainCamera", {
                                                                            reflector::Property::Float("fov", 75.0f),
                                                                            reflector::Property::Float("near", 0.1f),
                                                                            reflector::Property::Float("far", 1000.0f),
-                                                                           reflector::Property::Color("clearColor", "#1a1a2e"),
                                                                        } };
-        case 0xA300:
-            return reflector::EntityInfo { id, "Light", "Sun", {
-                                                                   reflector::Property::String("lightType", "directional"),
-                                                                   reflector::Property::Float("intensity", 1.2f),
-                                                                   reflector::Property::Color("color", "#FFFDE7"),
-                                                               } };
-        case 0xA400:
-            return reflector::EntityInfo { id, "Canvas", "UI", {
-                                                                   reflector::Property::Int("enabled", 1),
-                                                                   reflector::Property::String("renderMode", "screenSpace"),
-                                                               } };
         default:
             return std::nullopt;
         }
     }
 };
+
+// Simulate variable workloads with a busy-wait
+static void busyWaitUs(int us)
+{
+    auto start = std::chrono::steady_clock::now();
+    while (std::chrono::duration_cast<std::chrono::microseconds>(
+               std::chrono::steady_clock::now() - start)
+               .count()
+        < us) {
+    }
+}
 
 int main()
 {
@@ -96,11 +90,55 @@ int main()
     server.start();
 
     std::printf("Press Ctrl+C to stop.\n");
+    std::printf("Simulating a game loop with profiled systems...\n");
+
+    int frame = 0;
     while (g_running) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // Mark frame boundary
+        REFLECTOR_FRAME(server);
+
+        // Simulate game systems with varying cost
+        {
+            REFLECTOR_PROFILE(server, "Physics.Broadphase");
+            busyWaitUs(1200 + std::rand() % 400);
+        }
+        {
+            REFLECTOR_PROFILE(server, "Physics.Narrowphase");
+            busyWaitUs(600 + std::rand() % 300);
+        }
+        {
+            REFLECTOR_PROFILE(server, "Render.Culling");
+            busyWaitUs(800 + std::rand() % 200);
+        }
+        {
+            REFLECTOR_PROFILE(server, "Render.DrawCalls");
+            busyWaitUs(5000 + std::rand() % 1000);
+        }
+        {
+            REFLECTOR_PROFILE(server, "Render.PostFX");
+            busyWaitUs(1000 + std::rand() % 400);
+        }
+        {
+            REFLECTOR_PROFILE(server, "AI.Pathfinding");
+            busyWaitUs(500 + std::rand() % 200);
+
+            // Simulate an occasional spike every ~5 seconds
+            if (frame % 300 == 299) {
+                busyWaitUs(8000);
+            }
+        }
+        {
+            REFLECTOR_PROFILE(server, "Audio.Mix");
+            busyWaitUs(300 + std::rand() % 100);
+        }
+
+        frame++;
+
+        // Target ~60fps (subtract approximate work time)
+        std::this_thread::sleep_for(std::chrono::milliseconds(6));
     }
 
     server.stop();
-    std::printf("Stopped.\n");
+    std::printf("Stopped after %d frames.\n", frame);
     return 0;
 }

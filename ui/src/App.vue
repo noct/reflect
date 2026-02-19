@@ -7,7 +7,7 @@ import TabBar from './components/TabBar.vue';
 import InspectPanel from './components/InspectPanel.vue';
 import PerformancePanel from './components/PerformancePanel.vue';
 
-const { connected, perf, perfHistory, scene, fetchEntity } = useApi();
+const { connected, perf, perfHistory, scene, profile, fetchEntity } = useApi();
 
 const selectedEntityId = ref(null);
 const activeTab = ref('inspect');
@@ -45,6 +45,7 @@ provide('fetchEntity', fetchEntity);
             v-else-if="activeTab === 'performance'"
             :perf="perf"
             :perfHistory="perfHistory"
+            :profile="profile"
             :connected="connected"
           />
         </div>
