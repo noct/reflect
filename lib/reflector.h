@@ -81,12 +81,7 @@ struct Property {
     }
 };
 
-struct EntityInfo {
-    uintptr_t id;
-    std::string type;
-    std::string name; // empty if unnamed
-    std::vector<Property> properties;
-};
+using EntityInfo = std::vector<Property>;
 
 } // namespace reflector
 
@@ -187,13 +182,10 @@ namespace detail {
     static nlohmann::json entityToJson(const EntityInfo& e)
     {
         nlohmann::json props = nlohmann::json::array();
-        for (auto& p : e.properties) {
+        for (auto& p : e) {
             props.push_back(propertyToJson(p));
         }
         return {
-            { "id", std::to_string(e.id) },
-            { "type", e.type },
-            { "name", e.name.empty() ? nlohmann::json(nullptr) : nlohmann::json(e.name) },
             { "properties", props },
         };
     }

@@ -308,8 +308,7 @@ app.get('/api/entity/:id', (req, res) => {
   if (!entity) {
     return res.status(404).json({ error: 'Entity not found' });
   }
-  const { children, ...rest } = entity;
-  res.json(rest);
+  res.json({ properties: entity.properties });
 });
 
 // ---------------------------------------------------------------------------

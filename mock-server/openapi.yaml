@@ -39,8 +39,8 @@ paths:
 
   /api/entity/{id}:
     get:
-      summary: Get entity details
-      description: Returns the type, name, and property list for a single entity. Properties are typed (float, int, string, color).
+      summary: Get entity properties
+      description: Returns the property list for a single entity. Identity info (type, name) is available from the scene tree. Properties are typed (float, int, string, color).
       operationId: getEntity
       parameters:
         - name: id
@@ -51,7 +51,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Entity details with properties
+          description: Entity properties
           content:
             application/json:
               schema:
@@ -115,18 +115,8 @@ components:
 
     EntityDetail:
       type: object
-      required: [id, type, name, properties]
+      required: [properties]
       properties:
-        id:
-          type: string
-          example: "3204876128"
-        type:
-          type: string
-          example: Transform
-        name:
-          type: string
-          nullable: true
-          example: Player
         properties:
           type: array
           items:

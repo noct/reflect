@@ -54,34 +54,34 @@ protected:
     {
         switch (id) {
         case 0xA000:
-            return reflector::EntityInfo { id, "Transform", "Root", {
-                                                                        reflector::Property::Float("position.x", 0.0f),
-                                                                        reflector::Property::Float("position.y", 0.0f),
-                                                                        reflector::Property::Float("position.z", 0.0f),
-                                                                    } };
+            return reflector::EntityInfo {
+                reflector::Property::Float("position.x", 0.0f),
+                reflector::Property::Float("position.y", 0.0f),
+                reflector::Property::Float("position.z", 0.0f),
+            };
         case 0xA100:
-            return reflector::EntityInfo { id, "Transform", "World", {
-                                                                         reflector::Property::Int("entityCount", 3),
-                                                                         reflector::Property::String("tag", "world"),
-                                                                     } };
+            return reflector::EntityInfo {
+                reflector::Property::Int("entityCount", 3),
+                reflector::Property::String("tag", "world"),
+            };
         case 0xA200:
-            return reflector::EntityInfo { id, "Camera", "MainCamera", {
-                                                                           reflector::Property::Float("fov", 75.0f),
-                                                                           reflector::Property::Float("near", 0.1f),
-                                                                           reflector::Property::Float("far", 1000.0f),
-                                                                           reflector::Property::Color("clearColor", "#1a1a2e"),
-                                                                       } };
+            return reflector::EntityInfo {
+                reflector::Property::Float("fov", 75.0f),
+                reflector::Property::Float("near", 0.1f),
+                reflector::Property::Float("far", 1000.0f),
+                reflector::Property::Color("clearColor", "#1a1a2e"),
+            };
         case 0xA300:
-            return reflector::EntityInfo { id, "Light", "Sun", {
-                                                                   reflector::Property::String("lightType", "directional"),
-                                                                   reflector::Property::Float("intensity", 1.2f),
-                                                                   reflector::Property::Color("color", "#FFFDE7"),
-                                                               } };
+            return reflector::EntityInfo {
+                reflector::Property::String("lightType", "directional"),
+                reflector::Property::Float("intensity", 1.2f),
+                reflector::Property::Color("color", "#FFFDE7"),
+            };
         case 0xA400:
-            return reflector::EntityInfo { id, "Canvas", "UI", {
-                                                                   reflector::Property::Int("enabled", 1),
-                                                                   reflector::Property::String("renderMode", "screenSpace"),
-                                                               } };
+            return reflector::EntityInfo {
+                reflector::Property::Int("enabled", 1),
+                reflector::Property::String("renderMode", "screenSpace"),
+            };
         default:
             return std::nullopt;
         }

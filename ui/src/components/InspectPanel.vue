@@ -10,21 +10,22 @@ const props = defineProps({
 
 const { fetchEntity } = useApi();
 
-const entity = ref(null);
+const properties = ref(null);
 const loading = ref(false);
 
 watch(
   () => props.entityId,
   async (id) => {
     if (!id) {
-      entity.value = null;
+      properties.value = null;
       return;
     }
     loading.value = true;
     try {
-      entity.value = await fetchEntity(id);
+      const data = await fetchEntity(id);
+      properties.value = data.properties;
     } catch {
-      entity.value = null;
+      properties.value = null;
     } finally {
       loading.value = false;
     }
@@ -45,25 +46,13 @@ function valueClass(type) {
       return '';
   }
 }
-
-function formatId(id) {
-  const num = parseInt(id);
-  if (isNaN(num)) return id;
-  return '0x' + num.toString(16).toUpperCase();
-}
 </script>
 
 <template>
   <div class="inspect-panel">
-    <template v-if="entity">
-      <div class="entity-header">
-        <span class="entity-type">{{ entity.type }}</span>
-        <span class="entity-name" v-if="entity.name">{{ entity.name }}</span>
-        <span class="entity-id">{{ formatId(entity.id) }}</span>
-      </div>
-
+    <template v-if="properties">
       <div class="properties">
-        <template v-for="prop in entity.properties" :key="prop.name">
+        <template v-for="prop in properties" :key="prop.name">
           <div v-if="prop.type === 'points2d'" class="prop-block">
             <div class="prop-block-header">
               <span class="prop-name">{{ prop.name }}</span>
@@ -94,29 +83,6 @@ function formatId(id) {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.entity-header {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.entity-type {
-  font-size: var(--fs-md);
-  font-weight: 500;
-  color: var(--accent-green);
-}
-
-.entity-name {
-  font-size: var(--fs-sm);
-  color: var(--text-primary);
-}
-
-.entity-id {
-  font-size: var(--fs-xs);
-  font-family: var(--font-mono);
-  color: var(--text-tertiary);
 }
 
 .properties {
