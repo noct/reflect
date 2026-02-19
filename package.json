@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "concurrently -n server,ui -c blue,green \"npm run dev -w mock-server\" \"npm run dev -w ui\"",
     "server": "npm run dev -w mock-server",
-    "ui": "npm run dev -w ui"
+    "ui": "npm run dev -w ui",
+    "build": "npm run build -w ui"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
